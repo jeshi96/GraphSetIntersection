@@ -63,8 +63,10 @@ int * prepare_byte_check_mask_dict()
             mask[x] = -2;
             continue;
         }
-        if (s0 == -1) s0 = 0; if (s1 == -1) s1 = 1;
-        if (s2 == -1) s2 = 2; if (s3 == -1) s3 = 3;
+        if (s0 == -1) s0 = 0;
+        if (s1 == -1) s1 = 1;
+        if (s2 == -1) s2 = 2;
+        if (s3 == -1) s3 = 3;
         mask[x] = (s0) | (s1 << 2) | (s2 << 4) | (s3 << 6);        
     }
 
@@ -303,7 +305,7 @@ int intersect_simd4x(int *set_a, int size_a, int *set_b, int size_b, int *set_c)
         __m128i p = _mm_shuffle_epi8(v_a, shuffle_mask[mask]);
         _mm_storeu_si128((__m128i*)(set_c + size_c), p);
 
-        size_c += _mm_popcnt_u32(mask);
+        size_c += __builtin_popcount(mask);
     }
 
     while (i < size_a && j < size_b) {
@@ -359,7 +361,7 @@ int intersect_simd4x_count(int* set_a, int size_a, int* set_b, int size_b)
                 _mm_or_si128(cmp_mask2, cmp_mask3));
 
         int mask = _mm_movemask_ps((__m128)cmp_mask);
-        res += _mm_popcnt_u32(mask);
+        res += __builtin_popcount(mask);
     }
 
     while (i < size_a && j < size_b) {
@@ -451,7 +453,7 @@ int intersect_filter_simd4x(int *set_a, int size_a,
         __m128i p = _mm_shuffle_epi8(v_a, shuffle_mask[mask]);
         _mm_storeu_si128((__m128i*)(set_c + size_c), p);
 
-        size_c += _mm_popcnt_u32(mask);
+        size_c += __builtin_popcount(mask);
     }
 
     while (i < size_a && j < size_b) {
@@ -533,7 +535,7 @@ int intersect_filter_simd4x_count(int* set_a, int size_a,
         __m128i cmp_mask = _mm_cmpeq_epi32(v_a, sf_v_b);
 
         int mask = _mm_movemask_ps((__m128)cmp_mask);
-        res += _mm_popcnt_u32(mask);
+        res += __builtin_popcount(mask);
     }
     
     while (i < size_a && j < size_b) {
@@ -578,7 +580,7 @@ int bp_intersect_count(int* bases_a, PackState* states_a, int size_a,
     int i = 0, j = 0, res = 0;
     while (i < size_a && j < size_b) {
         if (bases_a[i] == bases_b[j]) {
-            res += _mm_popcnt_u32(states_a[i] & states_b[j]);
+            res += __builtin_popcount(states_a[i] & states_b[j]);
             i++; j++;
         } else if (bases_a[i] < bases_b[j]) {
             i++;
@@ -671,17 +673,17 @@ int bp_intersect_scalar2x_count(int* bases_a, PackState* states_a, int size_a,
             int Bdat0 = bases_b[j], Bdat1 = bases_b[j + 1];
 
             if (Adat0 == Bdat0) {
-                res += _mm_popcnt_u32(states_a[i] & states_b[j]);
+                res += __builtin_popcount(states_a[i] & states_b[j]);
             } else if (Adat0 == Bdat1) {
-                res += _mm_popcnt_u32(states_a[i] & states_b[j + 1]);
+                res += __builtin_popcount(states_a[i] & states_b[j + 1]);
                 goto advanceB;            
             } else if (Adat1 == Bdat0) {
-                res += _mm_popcnt_u32(states_a[i + 1] & states_b[j]);           
+                res += __builtin_popcount(states_a[i + 1] & states_b[j]);           
                 goto advanceA;
             }
 
             if (Adat1 == Bdat1) {
-                res += _mm_popcnt_u32(states_a[i + 1] & states_b[j + 1]);
+                res += __builtin_popcount(states_a[i + 1] & states_b[j + 1]);
                 goto advanceAB;
             } else if (Adat1 > Bdat1) {
                 goto advanceB;
@@ -706,7 +708,7 @@ int bp_intersect_scalar2x_count(int* bases_a, PackState* states_a, int size_a,
 
     while (i < size_a && j < size_b) {
         if (bases_a[i] == bases_b[j]) {
-            res += _mm_popcnt_u32(states_a[i] & states_b[j]);
+            res += __builtin_popcount(states_a[i] & states_b[j]);
             i++; j++;
         } else if (bases_a[i] < bases_b[j]) {
             i++;
@@ -798,7 +800,7 @@ int bp_intersect_simd4x(int* bases_a, PackState* states_a, int size_a,
         _mm_storeu_si128((__m128i*)(bases_c + size_c), res_b);
         _mm_storeu_si128((__m128i*)(states_c + size_c), res_s);
 
-        size_c += _mm_popcnt_u32(mask);
+        size_c += __builtin_popcount(mask);
     }
 
     while (i < size_a && j < size_b) {
@@ -888,7 +890,7 @@ int bp_intersect_simd4x_count(int* bases_a, PackState* states_a, int size_a,
 
     while (i < size_a && j < size_b) {
         if (bases_a[i] == bases_b[j]) {
-            res += _mm_popcnt_u32(states_a[i] & states_b[j]);
+            res += __builtin_popcount(states_a[i] & states_b[j]);
             i++; j++;
         } else if (bases_a[i] < bases_b[j]) {
             i++;
@@ -1025,7 +1027,7 @@ int bp_intersect_filter_simd4x(int* bases_a, PackState* states_a, int size_a,
         _mm_storeu_si128((__m128i*)(bases_c + size_c), res_b);
         _mm_storeu_si128((__m128i*)(states_c + size_c), res_s);
 
-        size_c += _mm_popcnt_u32(mask);
+        size_c += __builtin_popcount(mask);
     }
 
     while (i < size_a && j < size_b) {
@@ -1161,7 +1163,7 @@ int bp_intersect_filter_simd4x_count(int* bases_a, PackState* states_a, int size
         __m128i state_mask = _mm_cmpeq_epi32(and_state, all_zero_si128);
         cmp_mask = _mm_andnot_si128(state_mask, cmp_mask);
         int mask = _mm_movemask_ps((__m128)cmp_mask);
-        size_c += _mm_popcnt_u32(mask);
+        size_c += __builtin_popcount(mask);
         
         // popcnt:
         _mm_store_si128((__m128i*)bits, and_state);
@@ -1171,7 +1173,7 @@ int bp_intersect_filter_simd4x_count(int* bases_a, PackState* states_a, int size
 
     while (i < size_a && j < size_b) {
         if (bases_a[i] == bases_b[j]) {
-            res += _mm_popcnt_u32(states_a[i] & states_b[j]);
+            res += __builtin_popcount(states_a[i] & states_b[j]);
             i++; j++;
         } else if (bases_a[i] < bases_b[j]) {
             i++;
@@ -1254,7 +1256,7 @@ int bp_subtract_visited_simd4x(int* bases_a, PackState* states_a, int size_a,
             __m128i res_s = _mm_shuffle_epi8(state_c, shuffle_mask[mask]);
             _mm_storeu_si128((__m128i*)(bases_c + size_c), res_b);
             _mm_storeu_si128((__m128i*)(states_c + size_c), res_s);
-            size_c += _mm_popcnt_u32(mask);            
+            size_c += __builtin_popcount(mask);            
         }
     }
 
@@ -1290,7 +1292,7 @@ int bp_subtract_unvisited_simd4x(int* bases_a, PackState* states_a, int size_a,
             __m128i res_s = _mm_shuffle_epi8(state_c, shuffle_mask[mask]);
             _mm_storeu_si128((__m128i*)(bases_c + size_c), res_b);
             _mm_storeu_si128((__m128i*)(states_c + size_c), res_s);
-            size_c += _mm_popcnt_u32(mask);            
+            size_c += __builtin_popcount(mask);            
         }
     }
 
