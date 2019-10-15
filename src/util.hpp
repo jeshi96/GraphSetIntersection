@@ -35,7 +35,7 @@ const size_t PACK_NODE_POOL_SIZE = 1024000000;
 
 #if defined(_SC_LEVEL1_DCACHE_LINESIZE)
 const int CACHE_LINE_SIZE = sysconf (_SC_LEVEL1_DCACHE_LINESIZE); // in byte.
-#elif
+#else
 const int CACHE_LINE_SIZE = 32;
 #endif
 struct PackNode
